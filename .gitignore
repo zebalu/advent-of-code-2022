@@ -7,3 +7,5 @@ build
 /.settings
 /aoc2022/.settings
 /aoc2022/bin
+/aoc2022/.classpath
+/aoc2022/.project
