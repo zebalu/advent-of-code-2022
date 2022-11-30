@@ -3,3 +3,7 @@
 
 # Ignore Gradle build output directory
 build
+/.project
+/.settings
+/aoc2022/.settings
+/aoc2022/bin
