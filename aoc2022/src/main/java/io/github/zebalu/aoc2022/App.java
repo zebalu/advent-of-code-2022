@@ -15,9 +15,40 @@
  */
 package io.github.zebalu.aoc2022;
 
+import java.util.ArrayList;
+import java.util.function.Consumer;
+
 public class App {
 
     public static void main(String[] args) {
-        Day01.main(args);
+        var days = new ArrayList<DayData>();
+        days.add(new DayData(1, "Calorie Counting", Day01::main));
+        for(var day: days) {
+            System.out.println(day.header());
+            day.method.accept(args);
+            System.out.println(day.footer());
+        }
+    }
+    
+    private static record DayData(int id, String title, Consumer<String[]> method) {
+        public String header() {
+            return appendString('#');
+        }
+        public String footer() {
+            return appendString('*');
+        }
+        private String appendString(char chr) {
+            StringBuilder sb = new StringBuilder();
+            String title = String.format(" Day %02d: %s ", id, this.title);
+            int preLength = (80 - title.length())/2;
+            for(int i=0; i<preLength; ++i) {
+                sb.append(chr);
+            }
+            sb.append(title);
+            for(int i=sb.length(); i<80; ++i) {
+                sb.append(chr);
+            }
+            return sb.toString();
+        }
     }
 }
