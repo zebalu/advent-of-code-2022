@@ -15,6 +15,8 @@
  */
 package io.github.zebalu.aoc2022;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.function.Consumer;
 
@@ -23,9 +25,13 @@ public class App {
     public static void main(String[] args) {
         var days = new ArrayList<DayData>();
         days.add(new DayData(1, "Calorie Counting", Day01::main));
+        days.add(new DayData(2, "Rock Papper Scissors", Day02::main));
         for(var day: days) {
             System.out.println(day.header());
+            Instant before = Instant.now();
             day.method.accept(args);
+            Instant after = Instant.now();
+            System.out.println("time: "+Duration.between(before, after).toMillis()+" ms");
             System.out.println(day.footer());
         }
     }
