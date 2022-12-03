@@ -3,6 +3,7 @@ package io.github.zebalu.aoc2022;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
 
@@ -29,13 +30,13 @@ public class Day03 {
             return a;
         }).orElseThrow();
     }
+    
+    private static List<Character> toCharList(String line) {
+        return line.chars().mapToObj(i -> Character.valueOf((char) i)).toList();
+    }
 
     private static Set<Character> toSet(String line) {
-        Set<Character> result = new HashSet<>();
-        for (var ch : line.toCharArray()) {
-            result.add(ch);
-        }
-        return result;
+        return new HashSet<>(toCharList(line));
     }
 
     private static int charToInt(char ch) {
@@ -47,14 +48,9 @@ public class Day03 {
     }
 
     private static Set<Character> commonCharsInLine(String line) {
-        Set<Character> r1 = new HashSet<>();
-        Set<Character> r2 = new HashSet<>();
-        for (int i = 0; i < line.length() / 2; ++i) {
-            r1.add(line.charAt(i));
-        }
-        for (int i = line.length() / 2; i < line.length(); ++i) {
-            r2.add(line.charAt(i));
-        }
+        var list = toCharList(line);
+        Set<Character> r1 = new HashSet<>(list.subList(0, list.size()/2));
+        Set<Character> r2 = new HashSet<>(list.subList(list.size()/2, list.size()));
         r1.retainAll(r2);
         return r1;
     }
