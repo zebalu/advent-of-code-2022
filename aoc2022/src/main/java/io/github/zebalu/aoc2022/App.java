@@ -15,10 +15,16 @@
  */
 package io.github.zebalu.aoc2022;
 
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.IntStream;
 
 public class App {
 
@@ -26,12 +32,21 @@ public class App {
         var days = new ArrayList<DayData>();
         days.add(new DayData(1, "Calorie Counting", Day01::main));
         days.add(new DayData(2, "Rock Papper Scissors", Day02::main));
+        days.add(new DayData(3, "Rucksack Reorganization", Day03::main));
         for(var day: days) {
             System.out.println(day.header());
             Instant before = Instant.now();
+            var origOut = System.out;
+            var measuring = new MeasurerPrintStream(true, StandardCharsets.UTF_8, origOut);
+            System.setOut(measuring);
             day.method.accept(args);
+            System.setOut(origOut);
             Instant after = Instant.now();
-            System.out.println("time: "+Duration.between(before, after).toMillis()+" ms");
+            var measurements = measuring.getDurations();
+            for(int i=0; i<measurements.size(); ++i) {
+                System.out.println("Solution "+(i+1)+": "+measurements.get(i).toMillis()+" ms");
+            }
+            System.out.println("Total time: "+Duration.between(before, after).toMillis()+" ms");
             System.out.println(day.footer());
         }
     }
@@ -45,7 +60,7 @@ public class App {
         }
         private String appendString(char chr) {
             StringBuilder sb = new StringBuilder();
-            String title = String.format(" Day %02d: %s ", id, this.title);
+            String title = String.format(" --- Day %02d: %s --- ", id, this.title);
             int preLength = (80 - title.length())/2;
             for(int i=0; i<preLength; ++i) {
                 sb.append(chr);
@@ -57,4 +72,37 @@ public class App {
             return sb.toString();
         }
     }
+    
+    private static class MeasurerPrintStream extends PrintStream {
+        private final List<Instant> measurements = new ArrayList<>();
+        public MeasurerPrintStream(boolean autoFlush, Charset charSet, OutputStream outputStream) {
+            super(outputStream,autoFlush, charSet);
+            measurements.add(Instant.now());
+        }
+        public List<Duration> getDurations() {
+            return IntStream.range(0, measurements.size()-1).mapToObj(i->Duration.between(measurements.get(i), measurements.get(i+1))).toList();
+        }
+        @Override
+        public void println(String s) {
+            measurements.add(Instant.now());
+            super.println(s);
+        }
+        @Override
+        public void println(int i) {
+            measurements.add(Instant.now());
+            super.println(i);
+        }
+        @Override
+        public void println(long L) {
+            measurements.add(Instant.now());
+            super.println(L);
+        }
+        @Override
+        public void println(Object o) {
+            measurements.add(Instant.now());
+            super.println(o);
+        }
+    }
+    
+    
 }
