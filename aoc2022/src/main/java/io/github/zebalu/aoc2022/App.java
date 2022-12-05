@@ -34,6 +34,7 @@ public class App {
         days.add(new DayData(2, "Rock Papper Scissors", Day02::main));
         days.add(new DayData(3, "Rucksack Reorganization", Day03::main));
         days.add(new DayData(4, "Camp Cleanup", Day04::main));
+        days.add(new DayData(5, "Supply Stacks", Day05::main));
         for(var day: days) {
             System.out.println(day.header());
             Instant before = Instant.now();
