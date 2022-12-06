@@ -35,6 +35,8 @@ public class App {
         days.add(new DayData(3, "Rucksack Reorganization", Day03::main));
         days.add(new DayData(4, "Camp Cleanup", Day04::main));
         days.add(new DayData(5, "Supply Stacks", Day05::main));
+        days.add(new DayData(6, "Tuning Trouble", Day06::main));
+        Instant beforAll = Instant.now();
         for(var day: days) {
             System.out.println(day.header());
             Instant before = Instant.now();
@@ -51,6 +53,8 @@ public class App {
             System.out.println("Total time: "+Duration.between(before, after).toMillis()+" ms");
             System.out.println(day.footer());
         }
+        Instant afterAll = Instant.now();
+        System.out.println("Whole execution took: "+Duration.between(beforAll, afterAll).toMillis()+" ms");
     }
     
     private static record DayData(int id, String title, Consumer<String[]> method) {
