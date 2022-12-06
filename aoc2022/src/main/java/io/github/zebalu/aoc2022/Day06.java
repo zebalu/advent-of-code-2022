@@ -14,7 +14,7 @@ public class Day06 {
     }
 
     private static boolean isOK(int index, int length, String str) {
-        return str.substring(index - length + 1, index + 1).chars().mapToObj(i -> (char) i).collect(Collectors.toSet())
+        return str.substring(index - length + 1, index + 1).chars().boxed().collect(Collectors.toSet())
                 .size() == length;
     }
 
