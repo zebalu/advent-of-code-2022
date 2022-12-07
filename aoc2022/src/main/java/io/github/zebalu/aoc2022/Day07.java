@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Day07 {
-    
+
     private static final int DIR_LIMIT = 100_000;
     private static final int CAPACITY = 70_000_000;
     private static final int NEED_SPACE = 30_000_000;
@@ -23,8 +23,8 @@ public class Day07 {
     private static void part2(FSElement root, List<FSElement> dirs) {
         int availableSpace = CAPACITY - root.size;
         int needed = NEED_SPACE - availableSpace;
-        System.out.println(
-                dirs.stream().filter(d -> d.size >= needed).min((a, b) -> a.size - b.size).orElseThrow().size);
+        System.out
+                .println(dirs.stream().filter(d -> d.size >= needed).min((a, b) -> a.size - b.size).orElseThrow().size);
     }
 
     private static List<FSElement> readInput(FSElement root) {
@@ -67,8 +67,7 @@ public class Day07 {
         if (dirName.equals("..")) {
             return current.parent;
         } else {
-            return current.subElements.stream().filter(fse -> fse.name.equals(dirName)).findAny()
-                    .orElse(new FSElement(0, dirName, false, current));
+            return current.subElements.stream().filter(fse -> fse.name.equals(dirName)).findAny().orElseThrow();
         }
     }
 
