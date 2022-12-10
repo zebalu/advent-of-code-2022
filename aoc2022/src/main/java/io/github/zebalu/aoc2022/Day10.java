@@ -6,30 +6,46 @@ import java.util.StringJoiner;
 
 public class Day10 {
     public static void main(String[] args) {
-        Map<Integer, Integer> duringCycle = calculateDuringCycleValues();
-        part1(duringCycle);
-        part2(duringCycle);
+        var duringCycle = calculateDuringCycleValues();
+        System.out.println(part1(duringCycle));
+        System.out.println(part2(duringCycle));
     }
 
-    private static void part1(Map<Integer, Integer> duringCycle) {
-        int sum = 0;
+    private static int part1(Map<Integer, Integer> duringCycle) {
+        var sum = 0;
         for (int i = 20; i <= 220; i += 40) {
             sum += i * duringCycle.get(i);
         }
-        System.out.println(sum);
+        return sum;
+    }
+
+    private static String part2(Map<Integer, Integer> cycleValues) {
+        var cycle = 1;
+        var rowJoiner = new StringJoiner("\n");
+        for (var i = 0; i < 6; ++i) {
+            var lineBuilder = new StringBuilder();
+            for (var j = 0; j < 40; ++j) {
+                if (Math.abs(cycleValues.get(cycle) - j) <= 1) {
+                    lineBuilder.append("#");
+                } else {
+                    lineBuilder.append(" ");
+                }
+                ++cycle;
+            }
+            rowJoiner.add(lineBuilder.toString());
+        }
+        return rowJoiner.toString();
     }
 
     private static Map<Integer, Integer> calculateDuringCycleValues() {
-        Map<Integer, Integer> duringCycle = new HashMap<>();
-        int x = 1;
-        var lines = INPUT.lines().toList();
-        int cycle = 1;
-        for (int i = 0; i < lines.size(); ++i) {
-            String line = lines.get(i);
+        var duringCycle = new HashMap<Integer, Integer>();
+        var x = 1;
+        var cycle = 1;
+        for (var line : INPUT.lines().toList()) {
             if (line.equals("noop")) {
                 duringCycle.put(cycle, x);
             } else {
-                int value = Integer.parseInt(line.split(" ")[1]);
+                var value = Integer.parseInt(line.split(" ")[1]);
                 duringCycle.put(cycle, x);
                 ++cycle;
                 duringCycle.put(cycle, x);
@@ -38,24 +54,6 @@ public class Day10 {
             ++cycle;
         }
         return duringCycle;
-    }
-
-    private static void part2(Map<Integer, Integer> duringCycle) {
-        int cycle = 1;
-        StringJoiner rowsJoiner = new StringJoiner("\n");
-        for (int i = 0; i < 6; ++i) {
-            StringBuilder lineBuilder = new StringBuilder();
-            for (int j = 0; j < 40; ++j) {
-                if (Math.abs(duringCycle.get(cycle) - j) <= 1) {
-                    lineBuilder.append("#");
-                } else {
-                    lineBuilder.append(" ");
-                }
-                ++cycle;
-            }
-            rowsJoiner.add(lineBuilder.toString());
-        }
-        System.out.println(rowsJoiner.toString());
     }
 
     private static final String INPUT = """
