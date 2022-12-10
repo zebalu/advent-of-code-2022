@@ -28,9 +28,9 @@ public class Day09 {
 
     private static int moveRope(List<Move> moves, Coord[] knots) {
         var tailVisited = new HashSet<>();
-        tailVisited.add(new Coord(0, 0));
+        tailVisited.add(knots[knots.length-1]);
         for (var move : moves) {
-            for (int i = 0; i < move.count; ++i) {
+            for (var i = 0; i < move.count; ++i) {
                 knots[0] = knots[0].moveOneStep(move);
                 for (int j = 1; j < knots.length; ++j) {
                     knots[j] = calcTail(knots[j - 1], knots[j]);

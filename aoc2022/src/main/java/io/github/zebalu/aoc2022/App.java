@@ -39,6 +39,7 @@ public class App {
         days.add(new DayData(7, "No Space Left On Device", Day07::main));
         days.add(new DayData(8, "Treetop Tree House", Day08::main));
         days.add(new DayData(9, "Rope Bridge", Day09::main));
+        days.add(new DayData(10, "Cathode-Ray Tube", Day10::main));
         Instant beforAll = Instant.now();
         for(var day: days) {
             System.out.println(day.header());
