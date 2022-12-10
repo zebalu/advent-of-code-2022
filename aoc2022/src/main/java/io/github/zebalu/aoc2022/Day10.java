@@ -24,13 +24,8 @@ public class Day10 {
         var rowJoiner = new StringJoiner("\n");
         for (var i = 0; i < 6; ++i) {
             var lineBuilder = new StringBuilder();
-            for (var j = 0; j < 40; ++j) {
-                if (Math.abs(cycleValues.get(cycle) - j) <= 1) {
-                    lineBuilder.append("#");
-                } else {
-                    lineBuilder.append(" ");
-                }
-                ++cycle;
+            for (var j = 0; j < 40; ++j, ++cycle) {
+                lineBuilder.append(Math.abs(cycleValues.get(cycle) - j) <= 1 ? "#" : " ");
             }
             rowJoiner.add(lineBuilder.toString());
         }
@@ -43,15 +38,12 @@ public class Day10 {
         var cycle = 1;
         for (var line : INPUT.lines().toList()) {
             if (line.equals("noop")) {
-                duringCycle.put(cycle, x);
+                duringCycle.put(cycle++, x);
             } else {
-                var value = Integer.parseInt(line.split(" ")[1]);
-                duringCycle.put(cycle, x);
-                ++cycle;
-                duringCycle.put(cycle, x);
-                x += value;
+                duringCycle.put(cycle++, x);
+                duringCycle.put(cycle++, x);
+                x += Integer.parseInt(line.split(" ")[1]);
             }
-            ++cycle;
         }
         return duringCycle;
     }
