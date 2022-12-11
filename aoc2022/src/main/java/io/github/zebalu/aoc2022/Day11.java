@@ -1,11 +1,8 @@
 package io.github.zebalu.aoc2022;
 
-import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 
 public class Day11 {
@@ -23,43 +20,46 @@ public class Day11 {
     }
 
     private static long monkeyBusiness(int rounds, boolean calm) {
-        var msi = INPUT.split("\n\n");
-        var monkeys = new LinkedHashMap<Integer, Monkey>();
+        var monkeys = readMonkeys(calm);
+        executeRounds(rounds, monkeys);
+        return monkeys.stream().sorted((a, b) -> (int) (b.count - a.count)).mapToLong(m -> m.count).limit(2).reduce(1L,
+                (a, b) -> a * b);
+    }
 
-        Arrays.stream(msi).forEach(sss -> {
-            var lines = sss.lines().toList();
-            var id = Integer.parseInt(lines.get(0).substring(0, lines.get(0).length() - 1).split(" ")[1]);
-            var items = Arrays.stream(lines.get(1).substring("  Starting items: ".length()).split(", "))
-                    .map(s -> Long.parseLong(s)).map(l -> BigInteger.valueOf(l)).toList();
-            var operation = toOperation(lines.get(2).substring("  Operation: new = old ".length()).split(" "));
-            var test = toTest(lines.get(3).split(" "));
-            var to = toSelection(lines.get(4).split(" "), lines.get(5).split(" "));
-            monkeys.put(id, new Monkey(items, operation, test, to, calm));
-        });
+    private static void executeRounds(int rounds, List<Monkey> monkeys) {
         for (var i = 0; i < rounds; ++i) {
-            for (var m : monkeys.values()) {
+            for (var m : monkeys) {
                 m.round(monkeys);
             }
         }
-
-        return monkeys.values().stream().sorted((a, b) -> (int) (b.count - a.count)).mapToLong(m -> m.count).limit(2)
-                .reduce(1L, (a, b) -> a * b);
     }
 
-    private static final Function<BigInteger, BigInteger> toOperation(String[] parts) {
+    private static List<Monkey> readMonkeys(boolean calm) {
+        return Arrays.stream(INPUT.split("\n\n")).map(monkey -> linesToMonkey(monkey.lines().toList(), calm)).toList();
+    }
+
+    private static Monkey linesToMonkey(List<String> lines, boolean calm) {
+        return new Monkey(
+                Arrays.stream(lines.get(1).substring("  Starting items: ".length()).split(", "))
+                        .map(s -> Long.parseLong(s)).toList(),
+                toOperation(lines.get(2).substring("  Operation: new = old ".length()).split(" ")),
+                toTest(lines.get(3).split(" ")), toSelection(lines.get(4).split(" "), lines.get(5).split(" ")), calm);
+    }
+
+    private static final Function<Long, Long> toOperation(String[] parts) {
         boolean isOld = "old".equals(parts[parts.length - 1]);
         long v = isOld ? -1 : Integer.parseInt(parts[parts.length - 1]);
         if (parts[0].equals("+")) {
-            return isOld ? (a) -> a.add(a) : (a) -> a.add(BigInteger.valueOf(v));
+            return isOld ? (a) -> a + a : (a) -> a + v;
         } else if (parts[0].equals("*")) {
-            return isOld ? a -> a.multiply(a) : (a) -> a.multiply(BigInteger.valueOf(v));
+            return isOld ? a -> a * a : (a) -> a * v;
         } else {
             throw new IllegalStateException("what is this? '" + parts[0] + "'");
         }
     }
 
-    private static final BigInteger toTest(String[] parts) {
-        return BigInteger.valueOf(Long.parseLong(parts[parts.length - 1]));
+    private static final long toTest(String[] parts) {
+        return Long.parseLong(parts[parts.length - 1]);
     }
 
     private static final Function<Boolean, Integer> toSelection(String[] trueLineParts, String[] falseLineParts) {
@@ -69,15 +69,15 @@ public class Day11 {
     }
 
     private static class Monkey {
-        private final List<BigInteger> items = new LinkedList<>();
-        private final Function<BigInteger, BigInteger> opertion;
-        private final BigInteger test;
+        private final List<Long> items = new LinkedList<>();
+        private final Function<Long, Long> opertion;
+        private final long test;
         private final Function<Boolean, Integer> target;
         private long count = 0L;
         private boolean shouldDivide = true;
-        private BigInteger mulitples = null;
+        private long mulitples = -1;
 
-        public Monkey(List<BigInteger> startItems, Function<BigInteger, BigInteger> opertion, BigInteger test,
+        public Monkey(List<Long> startItems, Function<Long, Long> opertion, long test,
                 Function<Boolean, Integer> target, boolean shouldDivide) {
             items.addAll(startItems);
             this.opertion = opertion;
@@ -86,19 +86,18 @@ public class Day11 {
             this.shouldDivide = shouldDivide;
         }
 
-        void round(Map<Integer, Monkey> monkeys) {
-            if (!shouldDivide && mulitples == null) {
-                mulitples = monkeys.values().stream().map(m -> m.test).reduce(BigInteger.ONE, (a, b) -> a.multiply(b));
+        void round(List<Monkey> monkeys) {
+            if (mulitples == -1) {
+                mulitples = monkeys.stream().map(m -> m.test).reduce(1L, (a, b) -> a * b);
             }
             while (!(items.isEmpty())) {
-                BigInteger item = items.remove(0);
-                BigInteger newValue = opertion.apply(item);
+                long item = items.remove(0);
+                long newValue = opertion.apply(item);
                 if (shouldDivide) {
-                    newValue = newValue.divide(BigInteger.valueOf(3L));
-                } else {
-                    newValue = newValue.divideAndRemainder(mulitples)[1];
+                    newValue = newValue / 3L;
                 }
-                int to = target.apply(newValue.divideAndRemainder(test)[1].equals(BigInteger.ZERO));
+                newValue = newValue % mulitples;
+                int to = target.apply(newValue % test == 0L);
                 monkeys.get(to).items.add(newValue);
                 ++count;
             }
