@@ -95,8 +95,9 @@ public class Day11 {
                 long newValue = opertion.apply(item);
                 if (shouldDivide) {
                     newValue = newValue / 3L;
+                } else {
+                    newValue = newValue % mulitples;
                 }
-                newValue = newValue % mulitples;
                 int to = target.apply(newValue % test == 0L);
                 monkeys.get(to).items.add(newValue);
                 ++count;
