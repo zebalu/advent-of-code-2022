@@ -40,8 +40,9 @@ public class App {
         days.add(new DayData(8, "Treetop Tree House", Day08::main));
         days.add(new DayData(9, "Rope Bridge", Day09::main));
         days.add(new DayData(10, "Cathode-Ray Tube", Day10::main));
+        days.add(new DayData(11, "Monkey in the Middle", Day11::main));
         Instant beforAll = Instant.now();
-        for(var day: days) {
+        for (var day : days) {
             System.out.println(day.header());
             Instant before = Instant.now();
             var origOut = System.out;
@@ -51,68 +52,76 @@ public class App {
             System.setOut(origOut);
             Instant after = Instant.now();
             var measurements = measuring.getDurations();
-            for(int i=0; i<measurements.size(); ++i) {
-                System.out.println("Solution "+(i+1)+": "+measurements.get(i).toMillis()+" ms");
+            for (int i = 0; i < measurements.size(); ++i) {
+                System.out.println("Solution " + (i + 1) + ": " + measurements.get(i).toMillis() + " ms");
             }
-            System.out.println("Total time: "+Duration.between(before, after).toMillis()+" ms");
+            System.out.println("Total time: " + Duration.between(before, after).toMillis() + " ms");
             System.out.println(day.footer());
         }
         Instant afterAll = Instant.now();
-        System.out.println("Whole execution took: "+Duration.between(beforAll, afterAll).toMillis()+" ms");
+        System.out.println("Whole execution took: " + Duration.between(beforAll, afterAll).toMillis() + " ms");
     }
-    
+
     private static record DayData(int id, String title, Consumer<String[]> method) {
         public String header() {
             return appendString('#');
         }
+
         public String footer() {
             return appendString('*');
         }
+
         private String appendString(char chr) {
             StringBuilder sb = new StringBuilder();
             String title = String.format(" --- Day %02d: %s --- ", id, this.title);
-            int preLength = (80 - title.length())/2;
-            for(int i=0; i<preLength; ++i) {
+            int preLength = (80 - title.length()) / 2;
+            for (int i = 0; i < preLength; ++i) {
                 sb.append(chr);
             }
             sb.append(title);
-            for(int i=sb.length(); i<80; ++i) {
+            for (int i = sb.length(); i < 80; ++i) {
                 sb.append(chr);
             }
             return sb.toString();
         }
     }
-    
+
     private static class MeasurerPrintStream extends PrintStream {
         private final List<Instant> measurements = new ArrayList<>();
+
         public MeasurerPrintStream(boolean autoFlush, Charset charSet, OutputStream outputStream) {
-            super(outputStream,autoFlush, charSet);
+            super(outputStream, autoFlush, charSet);
             measurements.add(Instant.now());
         }
+
         public List<Duration> getDurations() {
-            return IntStream.range(0, measurements.size()-1).mapToObj(i->Duration.between(measurements.get(i), measurements.get(i+1))).toList();
+            return IntStream.range(0, measurements.size() - 1)
+                    .mapToObj(i -> Duration.between(measurements.get(i), measurements.get(i + 1))).toList();
         }
+
         @Override
         public void println(String s) {
             measurements.add(Instant.now());
             super.println(s);
         }
+
         @Override
         public void println(int i) {
             measurements.add(Instant.now());
             super.println(i);
         }
+
         @Override
         public void println(long L) {
             measurements.add(Instant.now());
             super.println(L);
         }
+
         @Override
         public void println(Object o) {
             measurements.add(Instant.now());
             super.println(o);
         }
     }
-    
-    
+
 }
