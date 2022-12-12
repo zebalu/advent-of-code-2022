@@ -37,18 +37,12 @@ public class Day12 {
         if (queue.isEmpty()) {
             return Integer.MAX_VALUE;
         }
-        var last = queue.poll();
-
-        return last.stepCount();
+        return queue.poll().stepCount();
     }
 
     private static Coord locate(List<String> lines, String chr) {
-        String line = null;
-        int y = 0;
-        int x = -1;
-        for (; y < lines.size(); ++y) {
-            line = lines.get(y);
-            x = line.indexOf(chr);
+        for (int y = 0; y < lines.size(); ++y) {
+            var x = lines.get(y).indexOf(chr);
             if (x != -1) {
                 return new Coord(x, y);
             }
