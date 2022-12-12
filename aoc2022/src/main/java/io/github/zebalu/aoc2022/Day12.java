@@ -1,8 +1,8 @@
 package io.github.zebalu.aoc2022;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -23,7 +23,7 @@ public class Day12 {
 
     private static int lengthFrom(Coord start, List<String> lines) {
         var visited = new HashSet<>();
-        var queue = new LinkedList<Path>();
+        var queue = new ArrayDeque<Path>();
         queue.add(new Path(start, 0));
         while (!queue.isEmpty() && queue.peek().end().value(lines) != 'E') {
             var next = queue.poll();
