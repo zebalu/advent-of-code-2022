@@ -2,7 +2,6 @@ package io.github.zebalu.aoc2022;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -29,20 +28,7 @@ public class Day13 {
                 pairs.stream().map(p -> List.of(p.left, p.right)).flatMap(l -> l.stream()).toList());
         packets.add(new Packet("[[6]]"));
         packets.add(new Packet("[[2]]"));
-        Comparator<Packet> cp = new Comparator<Packet>() {
-            public int compare(Packet left, Packet right) {
-                var p = new Pair(left, right);
-                var b = p.isRight();
-                if (b == null) {
-                    return 0;
-                } else if (b) {
-                    return -1;
-                } else {
-                    return 1;
-                }
-            };
-        };
-        var sorted = packets.stream().sorted(cp).toList();
+        var sorted = packets.stream().sorted().toList();
         return findPacket(sorted, "[[2]]") * findPacket(sorted, "[[6]]");
     }
 
@@ -56,58 +42,27 @@ public class Day13 {
     }
 
     private static final record Pair(Packet left, Packet right) {
-        Boolean isRight() {
-            return compareLists(left.read, right.read);
-        }
-
-        private Boolean compareLists(List<Object> left, List<Object> right) {
-            int i = 0;
-            for (; i < left.size() && i < right.size(); ++i) {
-                var l = left.get(i);
-                var r = right.get(i);
-                if (l instanceof Integer li && r instanceof Integer ri) {
-                    if (ri < li) {
-                        return false;
-                    } else if (li < ri) {
-                        return true;
-                    }
-                } else {
-                    var ll = toList(l);
-                    var rr = toList(r);
-                    var b = compareLists(ll, rr);
-                    if (b != null) {
-                        return b;
-                    }
-                }
-            }
-            if (left.size() < right.size()) {
-                return true;
-            } else if (right.size() < left.size()) {
-                return false;
-            }
-            return null;
-        }
-
-        @SuppressWarnings("unchecked")
-        private List<Object> toList(Object v) {
-            if (v instanceof List<?> lo) {
-                return (List<Object>) lo;
-            }
-            return List.of(v);
+        boolean isRight() {
+            return left.read.compareTo(right.read) < 0;
         }
     }
 
-    private static final class Packet {
+    private static final class Packet implements Comparable<Packet> {
         final String line;
-        final List<Object> read;
+        final ListPacket read;
 
         Packet(String line) {
             this.line = line;
             read = readList(line, 1, line.length() - 1).list;
         }
 
+        @Override
+        public int compareTo(Packet o) {
+            return this.read.compareTo(o.read);
+        }
+
         private static Tuple readList(String line, int start, int end) {
-            List<Object> read = new ArrayList<>();
+            List<SubPacket> read = new ArrayList<>();
             StringBuilder sb = new StringBuilder();
             int i = start;
             while (i < end) {
@@ -117,12 +72,12 @@ public class Day13 {
                     read.add(t.list);
                 } else if (line.charAt(i) == ']') {
                     if (sb.length() > 0) {
-                        read.add(Integer.parseInt(sb.toString()));
+                        read.add(new IntPacket(Integer.parseInt(sb.toString())));
                     }
-                    return new Tuple(i + 1, read);
+                    return new Tuple(i + 1, new ListPacket(read));
                 } else if (line.charAt(i) == ',') {
                     if (sb.length() > 0) {
-                        read.add(Integer.parseInt(sb.toString()));
+                        read.add(new IntPacket(Integer.parseInt(sb.toString())));
                         sb = new StringBuilder();
                     }
                     ++i;
@@ -132,14 +87,50 @@ public class Day13 {
                 }
             }
             if (sb.length() > 0) {
-                read.add(Integer.parseInt(sb.toString()));
+                read.add(new IntPacket(Integer.parseInt(sb.toString())));
             }
-            return new Tuple(i + 1, read);
+            return new Tuple(i + 1, new ListPacket(read));
         }
     }
 
-    private static final record Tuple(int idx, List<Object> list) {
+    private static final record Tuple(int idx, ListPacket list) {
 
+    }
+
+    private static sealed interface SubPacket extends Comparable<SubPacket>permits IntPacket, ListPacket {
+        @Override
+        default int compareTo(SubPacket o) {
+            if (this instanceof IntPacket left && o instanceof IntPacket right) {
+                return left.value() - right.value();
+            } else {
+                var left = this.toList();
+                var right = o.toList();
+                var compare = 0;
+                for (int i = 0; i < left.size() && i < right.size() && compare == 0; ++i) {
+                    compare = left.get(i).compareTo(right.get(i));
+                }
+                if (compare != 0) {
+                    return compare;
+                }
+                return left.size() - right.size();
+            }
+        }
+
+        List<SubPacket> toList();
+    }
+
+    private static final record IntPacket(int value) implements SubPacket {
+        @Override
+        public List<SubPacket> toList() {
+            return List.of(this);
+        }
+    }
+
+    private static final record ListPacket(List<SubPacket> list) implements SubPacket {
+        @Override
+        public List<SubPacket> toList() {
+            return list;
+        }
     }
 
     private static final String INPUT = """
