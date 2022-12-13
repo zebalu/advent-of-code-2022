@@ -8,26 +8,34 @@ import java.util.NoSuchElementException;
 
 public class Day13 {
     public static void main(String[] args) {
-        var pairStrs = INPUT.split("\n\n");
-        var pairs = Arrays.stream(pairStrs).map(ps -> ps.split("\n"))
+        var pairs = Arrays.stream(INPUT.split("\n\n")).map(ps -> ps.split("\n"))
                 .map(ls -> new Pair(new Packet(ls[0]), new Packet(ls[1]))).toList();
+        System.out.println(part1(pairs));
+        System.out.println(part2(pairs));
+    }
+
+    private static int part1(List<Pair> pairs) {
         int sum = 0;
         for (int i = 0; i < pairs.size(); ++i) {
             if (pairs.get(i).isRight()) {
                 sum += (i + 1);
             }
         }
-        System.out.println(sum);
-        var packets = new ArrayList<Packet>(pairs.stream().map(p->List.of(p.left, p.right)).flatMap(l->l.stream()).toList());
+        return sum;
+    }
+
+    private static int part2(List<Pair> pairs) {
+        var packets = new ArrayList<Packet>(
+                pairs.stream().map(p -> List.of(p.left, p.right)).flatMap(l -> l.stream()).toList());
         packets.add(new Packet("[[6]]"));
         packets.add(new Packet("[[2]]"));
         Comparator<Packet> cp = new Comparator<Packet>() {
             public int compare(Packet left, Packet right) {
                 var p = new Pair(left, right);
                 var b = p.isRight();
-                if(b == null) {
+                if (b == null) {
                     return 0;
-                } else if(b) {
+                } else if (b) {
                     return -1;
                 } else {
                     return 1;
@@ -35,13 +43,13 @@ public class Day13 {
             };
         };
         var sorted = packets.stream().sorted(cp).toList();
-        System.out.println(findPacket(sorted, "[[2]]") * findPacket(sorted, "[[6]]"));
+        return findPacket(sorted, "[[2]]") * findPacket(sorted, "[[6]]");
     }
-    
+
     private static final int findPacket(List<Packet> packets, String packet) {
-        for(int i=0; i<packets.size(); ++i) {
-            if(packets.get(i).line.equals(packet)) {
-                return i+1;
+        for (int i = 0; i < packets.size(); ++i) {
+            if (packets.get(i).line.equals(packet)) {
+                return i + 1;
             }
         }
         throw new NoSuchElementException();
@@ -60,29 +68,30 @@ public class Day13 {
                 if (l instanceof Integer li && r instanceof Integer ri) {
                     if (ri < li) {
                         return false;
-                    } else if(li<ri) {
+                    } else if (li < ri) {
                         return true;
                     }
                 } else {
                     var ll = toList(l);
                     var rr = toList(r);
                     var b = compareLists(ll, rr);
-                    if(b!= null) {
+                    if (b != null) {
                         return b;
                     }
                 }
             }
-            if(left.size() < right.size()) {
+            if (left.size() < right.size()) {
                 return true;
-            } else if(right.size() < left.size()) {
+            } else if (right.size() < left.size()) {
                 return false;
             }
             return null;
         }
 
+        @SuppressWarnings("unchecked")
         private List<Object> toList(Object v) {
-            if (v instanceof List lo) {
-                return lo;
+            if (v instanceof List<?> lo) {
+                return (List<Object>) lo;
             }
             return List.of(v);
         }
@@ -90,7 +99,7 @@ public class Day13 {
 
     private static final class Packet {
         final String line;
-        final List<Object> read; // = new ArrayList<Object>();
+        final List<Object> read;
 
         Packet(String line) {
             this.line = line;
@@ -122,7 +131,7 @@ public class Day13 {
                     ++i;
                 }
             }
-            if(sb.length()>0) {
+            if (sb.length() > 0) {
                 read.add(Integer.parseInt(sb.toString()));
             }
             return new Tuple(i + 1, read);
@@ -583,28 +592,5 @@ public class Day13 {
 
             [[[5,[8,5]],[9,2]],[[[4,9],[3,1],[2,7,5],[2,9,2]],0],[[2,10,2,[],[4,4,4]]],[[7,[1,2,5],[],9],[8,3,[3,8,0,1,10],0,5],1,7],[[[8,0,6,2],[],4,[10]],3,[],4,8]]
             [[[[9,8,4,2,4],[0,2,0],5],[7,[4,7,10],[]],[[4,0],2],[8,[2,0,10,4],[7,6]]],[],[1,[[1,4,9,8,6],4]]]""";
-    private static final String EXAMPLE = """
-[1,1,3,1,1]
-[1,1,5,1,1]
 
-[[1],[2,3,4]]
-[[1],4]
-
-[9]
-[[8,7,6]]
-
-[[4,4],4,4]
-[[4,4],4,4,4]
-
-[7,7,7,7]
-[7,7,7]
-
-[]
-[3]
-
-[[[]]]
-[[]]
-
-[1,[2,[3,[4,[5,6,7]]]],8,9]
-[1,[2,[3,[4,[5,6,0]]]],8,9]""";
 }
