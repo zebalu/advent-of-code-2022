@@ -18,53 +18,57 @@ public class Day14 {
     }
 
     private static long part1(Map<Coord, Character> cave, Boundaries bounds) {
-        boolean cameToRest = true;
-        while (cameToRest) {
-            var sand = new Coord(500, 0);
-            while (!cave.containsKey(sand) && cameToRest) {
-                var next = sand.fall();
-                if (cave.containsKey(next)) {
-                    next = sand.fallLeft();
-                    if (cave.containsKey(next)) {
-                        next = sand.fallRight();
-                    }
-                }
-                if (cave.containsKey(next)) {
-                    cave.put(sand, SAND);
-                } else {
-                    sand = next;
-                    if (sand.x() < bounds.minX() || sand.x() > bounds.maxX() || sand.y() > bounds.maxY()) {
-                        cameToRest = false;
-                    }
-                }
-            }
-        }
+        var source = new Coord(500, 0);
+        var changed = false;
+        do {
+            changed = fallWithBounds(cave, bounds, source);
+        } while (changed);
         return cave.values().stream().filter(v -> v.charValue() == SAND).count();
     }
 
     private static long part2(Map<Coord, Character> cave, int lastFloor) {
         var source = new Coord(500, 0);
         while (!cave.containsKey(source)) {
-            var sand = new Coord(500, 0);
-            while (!cave.containsKey(sand)) {
-                var next = sand.fall();
-                if (cave.containsKey(next)) {
-                    next = sand.fallLeft();
-                    if (cave.containsKey(next)) {
-                        next = sand.fallRight();
-                    }
-                }
-                if (cave.containsKey(next)) {
-                    cave.put(sand, SAND);
-                } else {
-                    sand = next;
-                    if (sand.y() == lastFloor) {
-                        cave.put(sand, 'o');
-                    }
-                }
-            }
+            fallWithFloor(source, cave, lastFloor);
         }
         return cave.values().stream().filter(v -> v.charValue() == SAND).count();
+    }
+
+    private static boolean fallWithBounds(Map<Coord, Character> cave, Boundaries bounds, Coord source) {
+        var sand = source;
+        while (!cave.containsKey(sand) && bounds.inBounds(sand.x(), sand.y())) {
+            var next = fallToNext(cave, sand);
+            if (cave.containsKey(next)) {
+                cave.put(sand, SAND);
+                return true;
+            } else {
+                sand = next;
+            }
+        }
+        return false;
+    }
+
+    private static void fallWithFloor(Coord source, Map<Coord, Character> cave, int lastFloor) {
+        var sand = source;
+        while (!cave.containsKey(sand)) {
+            var next = fallToNext(cave, sand);
+            if (cave.containsKey(next) || next.y() > lastFloor) {
+                cave.put(sand, SAND);
+            } else {
+                sand = next;
+            }
+        }
+    }
+
+    private static Coord fallToNext(Map<Coord, Character> cave, Coord sand) {
+        var next = sand.fall();
+        if (cave.containsKey(next)) {
+            next = sand.fallLeft();
+            if (cave.containsKey(next)) {
+                next = sand.fallRight();
+            }
+        }
+        return next;
     }
 
     private static Map<Coord, Character> readCave() {
@@ -118,6 +122,10 @@ public class Day14 {
     }
 
     private static final record Boundaries(int minX, int maxX, int minY, int maxY) {
+        boolean inBounds(int x, int y) {
+            return minX <= x && x <= maxX && y <= maxY;
+        }
+
         static Boundaries findBoundaries(Set<Coord> coords) {
             var minX = Integer.MAX_VALUE;
             var maxX = Integer.MIN_VALUE;
