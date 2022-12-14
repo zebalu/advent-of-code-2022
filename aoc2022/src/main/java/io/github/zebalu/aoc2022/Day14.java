@@ -7,6 +7,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class Day14 {
+    private static final char WALL = '#';
+    private static final char SAND = 'o';
+
     public static void main(String[] args) {
         var cave = readCave();
         var bounds = Boundaries.findBoundaries(cave.keySet());
@@ -27,7 +30,7 @@ public class Day14 {
                     }
                 }
                 if (cave.containsKey(next)) {
-                    cave.put(sand, 'o');
+                    cave.put(sand, SAND);
                 } else {
                     sand = next;
                     if (sand.x() < bounds.minX() || sand.x() > bounds.maxX() || sand.y() > bounds.maxY()) {
@@ -36,7 +39,7 @@ public class Day14 {
                 }
             }
         }
-        return cave.values().stream().filter(v -> v.charValue() == 'o').count();
+        return cave.values().stream().filter(v -> v.charValue() == SAND).count();
     }
 
     private static long part2(Map<Coord, Character> cave, int lastFloor) {
@@ -52,7 +55,7 @@ public class Day14 {
                     }
                 }
                 if (cave.containsKey(next)) {
-                    cave.put(sand, 'o');
+                    cave.put(sand, SAND);
                 } else {
                     sand = next;
                     if (sand.y() == lastFloor) {
@@ -61,7 +64,7 @@ public class Day14 {
                 }
             }
         }
-        return cave.values().stream().filter(v -> v.charValue() == 'o').count();
+        return cave.values().stream().filter(v -> v.charValue() == SAND).count();
     }
 
     private static Map<Coord, Character> readCave() {
@@ -75,14 +78,14 @@ public class Day14 {
                     var fromY = Math.min(prev.y(), next.y());
                     var toY = Math.max(prev.y(), next.y());
                     for (var y = fromY; y <= toY; ++y) {
-                        cave.put(new Coord(x, y), '#');
+                        cave.put(new Coord(x, y), WALL);
                     }
                 } else {
                     var y = prev.y();
                     var fromX = Math.min(prev.x(), next.x());
                     var toX = Math.max(prev.x(), next.x());
                     for (var x = fromX; x <= toX; ++x) {
-                        cave.put(new Coord(x, y), '#');
+                        cave.put(new Coord(x, y), WALL);
                     }
                 }
                 prev = next;
