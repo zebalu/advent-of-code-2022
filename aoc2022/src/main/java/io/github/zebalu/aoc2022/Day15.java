@@ -1,139 +1,64 @@
 package io.github.zebalu.aoc2022;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Queue;
-import java.util.Set;
+import java.util.stream.LongStream;
 
 public class Day15 {
     public static void main(String[] args) {
-        var coords = INPUT.lines().map(Pair::parse).toList();
-        coords.forEach(System.out::println);
-        long xMin = Integer.MAX_VALUE;
-        long xMax = Integer.MIN_VALUE;
-        for(var p: coords) {
-            if(p.beacon().x()<xMin) {
-                xMin=p.beacon().x();
-            }
-            if(xMax<p.beacon().x()) {
-                xMax=p.beacon().x();
-            }
-            if(p.sensore().x()<xMin) {
-                xMin=p.sensore().x();
-            }
-            if(xMax<p.sensore().x()) {
-                xMax=p.sensore().x();
-            }
-        }
-        System.out.println(xMin);
-        System.out.println(xMax);
-        Set<Coord> beacons = new HashSet<>(coords.stream().map(Pair::beacon).toList());
-        Pair startPair = coords.stream().filter(p->p.beacon().y()==2_000_000).findAny().orElseThrow();
+        var pairs = INPUT.lines().map(Pair::parse).toList();
+        System.out.println(part1(pairs));
+        System.out.println(part2(pairs));
+    }
+
+    private static long part1(List<Pair> pairs) {
+        var startPair = pairs.stream().filter(p -> p.beacon().y() == 2_000_000).findAny().orElseThrow();
         long distance = 1;
         boolean changed = true;
-        var count = 0;
-        while(changed) {
+        var count = 0L;
+        while (changed) {
             changed = false;
-            Coord left =new Coord(startPair.beacon().x()-distance, 2_000_000);
-            Coord right = new Coord(startPair.beacon().x()+distance, 2_000_000);
-            if(isInRadiousOfAny(coords, left)) {
-                //System.out.println("left");
+            Coord left = new Coord(startPair.beacon().x() - distance, 2_000_000);
+            Coord right = new Coord(startPair.beacon().x() + distance, 2_000_000);
+            if (isInRadiousOfAny(pairs, left)) {
                 changed = true;
                 ++count;
             }
-            if(isInRadiousOfAny(coords, right)) {
-                //System.out.println("right");
+            if (isInRadiousOfAny(pairs, right)) {
                 changed = true;
                 ++count;
             }
             ++distance;
-            if(distance%1_000_000 == 0) {
-            System.out.println("distance: "+distance+"\t"+count);
-            }
         }
-        System.out.println(count);
-        var c = find2(coords);
-        System.out.println(4000000*c.x()+c.y());
-    }
-    
-    private static Coord find(List<Pair> pairs) {
-        for(int x=0; x<=4_000_000; ++x) {
-            for(int y=0; y<=4_000_000; ++y) {
-                if(!isInRadiousOfAny(pairs, new Coord(x,y))) {
-                    return new Coord(x,y);
-                }
-            }
-        }
-        throw new NoSuchElementException();
-    }
-    
-    private static Coord find2(List<Pair> pairs) {
-        for(var p:pairs) {
-            long r = p.radious();
-            long req = r+1;
-            for(int d=0; d<=req;++d) {
-                var c = new Coord(p.sensore().x()-req+d, p.sensore().y()+d);
-                if( 0<=c.x() && 0<=c.y() && c.x()<=4_000_000 && c.y()<=4_000_000 && !isInRadiousOfAny(pairs,c)) {
-                    return c;
-                }
-                c = new Coord(p.sensore().x()-req+d, p.sensore().y()-d);
-                if( 0<=c.x() && 0<=c.y() && c.x()<=4_000_000 && c.y()<=4_000_000 && !isInRadiousOfAny(pairs,c)) {
-                    return c;
-                }
-                c = new Coord(p.sensore().x()+req-d, p.sensore().y()+d);
-                if( 0<=c.x() && 0<=c.y() && c.x()<=4_000_000 && c.y()<=4_000_000 && !isInRadiousOfAny(pairs,c)) {
-                    return c;
-                }
-                c = new Coord(p.sensore().x()+req-d, p.sensore().y()-d);
-                if( 0<=c.x() && 0<=c.y() && c.x()<=4_000_000 && c.y()<=4_000_000 && !isInRadiousOfAny(pairs,c)) {
-                    return c;
-                }
-            }
-        }
-        throw new NoSuchElementException();
-    }
-    
-    private static boolean isInRadiousOfAny(List<Pair> pairs, Coord point) {
-        /*
-        if(startPair.sensore().distance(point)<startPair.radious()) {
-            return true;
-        } else {
-            return false;
-        }
-        */
-       return pairs.stream().filter(p->p.sensore().distance(point)<=p.radious()).findAny().isPresent();
+        return count;
     }
 
-    private static Set<Coord> collectCircle(Coord center, long radious) {
-        Set<Coord> result = new HashSet<>();
-        Queue<Coord> queue = new ArrayDeque<>();
-        queue.add(center);
-        result.add(center);
-        for(int i=0; i<radious; ++i) {
-            List<Coord> newValues = new ArrayList<>();
-            queue.forEach(c->{
-                c.next().forEach(nc->{
-                   if(result.add(nc)) {
-                       newValues.add(nc);
-                   }
-                });
-            });
-            queue = new ArrayDeque<>(newValues);
-        }
-        return result;
+    private static long part2(List<Pair> pairs) {
+        var c = find(pairs);
+        return 4000000 * c.x() + c.y();
+    }
+
+    private static Coord find(List<Pair> pairs) {
+        var found = pairs.stream()
+                .map(p -> LongStream.rangeClosed(0, p.radious() + 1)
+                        .mapToObj(d -> List.of(new Coord(p.sensore().x() - p.radious() - 1 + d, p.sensore().y() + d),
+                                new Coord(p.sensore().x() - p.radious() - 1 + d, p.sensore().y() - d),
+                                new Coord(p.sensore().x() + p.radious() + 1 - d, p.sensore().y() + d),
+                                new Coord(p.sensore().x() + p.radious() + 1 - d, p.sensore().y() - d)))
+                        .flatMap(l -> l.stream()))
+                .flatMap(l -> l).filter(c -> 0 <= c.x() && 0 <= c.y() && c.x() <= 4_000_000 && c.y() <= 4_000_000
+                        && !isInRadiousOfAny(pairs, c))
+                .findAny();
+        return found.orElseThrow();
+    }
+
+    private static boolean isInRadiousOfAny(List<Pair> pairs, Coord point) {
+        return pairs.stream().filter(p -> p.sensore().distance(point) <= p.radious()).findAny().isPresent();
     }
 
     private static final record Coord(long x, long y) {
-        List<Coord> next() {
-            return List.of(new Coord(x, y + 1), new Coord(x + 1, y), new Coord(x, y - 1), new Coord(x - 1, y));
-        }
-        
         long distance(Coord other) {
-            return Math.abs(x-other.x) + Math.abs(y-other.y);
+            return Math.abs(x - other.x) + Math.abs(y - other.y);
         }
 
         static Coord parse(String desc) {
@@ -143,9 +68,9 @@ public class Day15 {
         }
     }
 
-    private static final record Pair(Coord sensore, Coord beacon) {
-        long radious() {
-            return sensore.distance(beacon);
+    private static final record Pair(Coord sensore, Coord beacon, long radious) {
+        Pair(Coord sensore, Coord beacon) {
+            this(sensore, beacon, sensore.distance(beacon));
         }
 
         static Pair parse(String desc) {
