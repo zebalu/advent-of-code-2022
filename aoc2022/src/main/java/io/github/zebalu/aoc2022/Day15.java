@@ -1,8 +1,10 @@
 package io.github.zebalu.aoc2022;
 
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
-import java.util.stream.LongStream;
+import java.util.NoSuchElementException;
 
 public class Day15 {
     public static void main(String[] args) {
@@ -12,50 +14,41 @@ public class Day15 {
     }
 
     private static long part1(List<Pair> pairs) {
-        var startPair = pairs.stream().filter(p -> p.beacon().y() == 2_000_000).findAny().orElseThrow();
-        long distance = 1;
-        boolean changed = true;
-        var count = 0L;
-        while (changed) {
-            changed = false;
-            Coord left = new Coord(startPair.beacon().x() - distance, 2_000_000);
-            Coord right = new Coord(startPair.beacon().x() + distance, 2_000_000);
-            if (isInRadiousOfAny(pairs, left)) {
-                changed = true;
-                ++count;
-            }
-            if (isInRadiousOfAny(pairs, right)) {
-                changed = true;
-                ++count;
-            }
-            ++distance;
+        var coveredRange = pairs.stream().map(p -> List.of(p.rangeIn(2_000_000))).reduce(List.of(), Range::plus)
+                .stream().distinct().mapToLong(Range::size).sum();
+        var beaconCount = pairs.stream().map(p->p.beacon()).distinct().mapToLong(b -> b.y() == 2_000_000L ? 1L : 0L).sum();
+        return coveredRange - beaconCount;
+    }
+
+    // original idea: https://github.com/p-kovacs/advent-of-code-2022/blob/master/src/main/java/com/github/pkovacs/aoc/y2022/Day15.java#L41
+    private static long part2(List<Pair> pairss) {
+        var max = 4000000L;
+
+        var sums = new HashSet<Long>();
+        var difs = new HashSet<Long>();
+        for (var s : pairss) {
+            sums.add(s.sensore().x() + s.sensore().y() - s.radious() - 1);
+            sums.add(s.sensore().x() + s.sensore().y() + s.radious() + 1);
+            difs.add(s.sensore().x() - s.sensore().y() - s.radious() - 1);
+            difs.add(s.sensore().x() - s.sensore().y() + s.radious() + 1);
         }
-        return count;
-    }
+        sums.add(max);
+        difs.add(0L);
 
-    private static long part2(List<Pair> pairs) {
-        var c = find(pairs);
-        return 4000000 * c.x() + c.y();
+        for (long a : new HashSet<>(sums)) {
+            for (long b : new HashSet<>(difs)) {
+                var x = (a + b) / 2;
+                var y = a - x;
+                var p = new Coord(x, y);
+                if ((a + b) % 2 == 0 && x >= 0 && x <= max && y >= 0 && y <= max
+                        && pairss.stream().noneMatch(s -> s.excludes(p))) {
+                    return (long) x * max + y;
+                }
+            }
+        }
+        throw new NoSuchElementException();
     }
-
-    private static Coord find(List<Pair> pairs) {
-        var found = pairs.stream()
-                .map(p -> LongStream.rangeClosed(0, p.radious() + 1)
-                        .mapToObj(d -> List.of(new Coord(p.sensore().x() - p.radious() - 1 + d, p.sensore().y() + d),
-                                new Coord(p.sensore().x() - p.radious() - 1 + d, p.sensore().y() - d),
-                                new Coord(p.sensore().x() + p.radious() + 1 - d, p.sensore().y() + d),
-                                new Coord(p.sensore().x() + p.radious() + 1 - d, p.sensore().y() - d)))
-                        .flatMap(l -> l.stream()))
-                .flatMap(l -> l).filter(c -> 0 <= c.x() && 0 <= c.y() && c.x() <= 4_000_000 && c.y() <= 4_000_000
-                        && !isInRadiousOfAny(pairs, c))
-                .findAny();
-        return found.orElseThrow();
-    }
-
-    private static boolean isInRadiousOfAny(List<Pair> pairs, Coord point) {
-        return pairs.stream().filter(p -> p.sensore().distance(point) <= p.radious()).findAny().isPresent();
-    }
-
+ 
     private static final record Coord(long x, long y) {
         long distance(Coord other) {
             return Math.abs(x - other.x) + Math.abs(y - other.y);
@@ -73,9 +66,133 @@ public class Day15 {
             this(sensore, beacon, sensore.distance(beacon));
         }
 
+        Range rangeIn(int y) {
+            Coord atCenter = new Coord(sensore().x(), y);
+            long distance = atCenter.distance(sensore());
+            if (distance >= radious()) {
+                return Range.EMPTY;
+            } else {
+                long dif = radious() - distance;
+                return new Range(sensore().x() - dif, sensore().x() + dif);
+            }
+        }
+        
+        boolean excludes(Coord c) {
+            return sensore().distance(c) <= radious();
+        }
+
         static Pair parse(String desc) {
             var sbStr = desc.split(": ");
             return new Pair(Coord.parse(sbStr[0]), Coord.parse(sbStr[1]));
+        }
+    }
+
+    private static final record Range(long from, long to) implements Comparable<Range> {
+        private static final Comparator<Range> COMPARATOR = Comparator.comparingLong(Range::from)
+                .thenComparingLong(Range::to);
+        static final Range EMPTY = new Range(0, -1);
+
+        long size() {
+            if (to < from) {
+                return 0;
+            }
+            return Math.abs(to - from) + 1;
+        }
+
+        @Override
+        public int compareTo(Range o) {
+            return COMPARATOR.compare(this, o);
+        }
+
+        boolean hasIntersection(Range other) {
+            return (from() <= other.from() && other.from() <= to()) || (other.from() <= from() && from() <= other.to());
+        }
+
+        List<Range> plus(Range other) {
+            if (this == EMPTY && other == EMPTY) {
+                return List.of();
+            } else if (this == EMPTY) {
+                return List.of(other);
+            } else if (other == EMPTY) {
+                return List.of(this);
+            }
+            if (from() == other.from() && to() == other.to()) {
+                return List.of(this);
+            }
+            if (from() < other.from()) {
+                if (other.from() < to()) {
+                    if (other.to() < to()) {
+                        return List.of(this);
+                    } else if (to() == other.to()) {
+                        return List.of(this);
+                    } else {
+                        return List.of(new Range(from(), other.from() - 1), other);
+                    }
+                } else if (other.from() == to()) {
+                    return List.of(new Range(from(), to() - 1), other);
+                } else {
+                    return List.of(this, other);
+                }
+            } else if (from() == other.from()) {
+                if (other.to() < to()) {
+                    return List.of(this);
+                } else {
+                    return List.of(other);
+                }
+            } else {
+                return other.plus(this);
+            }
+        }
+
+        static List<Range> plus(List<Range> ranges, Range range) {
+            if (ranges.isEmpty()) {
+                return List.of(range);
+            }
+            return distincRanges(ranges.stream().flatMap(r -> r.plus(range).stream()).toList());
+        }
+
+        static List<Range> distincRanges(List<Range> ranges) {
+            if (ranges.isEmpty()) {
+                return ranges;
+            }
+            var filtered = ranges.stream().filter(r -> r.size() > 0).sorted().toList();
+            if (filtered.size() < 2) {
+                return filtered;
+            }
+            boolean shouldCheck = false;
+            do {
+                shouldCheck = false;
+                var collector = new HashSet<Range>();
+                for (int i = 0; i < filtered.size() && !shouldCheck; ++i) {
+                    var set = new HashSet<Range>();
+                    for (int j = i + 1; j < filtered.size() && !shouldCheck; ++j) {
+                        var a = filtered.get(i);
+                        var b = filtered.get(j);
+                        if (a.hasIntersection(b)) {
+                            shouldCheck = true;
+                            set.addAll(a.plus(b));
+                            set.addAll(filtered.subList(j + 1, filtered.size()));
+                        }
+                    }
+                    if (!shouldCheck) {
+                        collector.add(filtered.get(i));
+                    } else {
+                        collector.addAll(set);
+                    }
+                }
+                filtered = collector.stream().sorted().toList();
+            } while (shouldCheck);
+            return filtered;
+        }
+
+        static List<Range> plus(List<Range> left, List<Range> right) {
+            if (left.size() > 0) {
+                return distincRanges(left.stream().flatMap(r -> plus(right, r).stream()).toList());
+            } else if (right.size() > 0) {
+                return plus(right, left);
+            } else {
+                return List.of();
+            }
         }
     }
 
