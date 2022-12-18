@@ -46,6 +46,8 @@ public class App {
         days.add(new DayData(14, "Regolith Reservoir", Day14::main));
         days.add(new DayData(15, "Beacon Exclusion Zone", Day15::main));
         days.add(new DayData(16, "Proboscidea Volcanium", Day16::main));
+        days.add(new DayData(17, "Pyroclastic Flow", Day17::main));
+        days.add(new DayData(18, "Boiling Boulders", Day18::main));
         Instant beforAll = Instant.now();
         for (var day : days) {
             System.out.println(day.header());
