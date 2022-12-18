@@ -7,24 +7,23 @@ public class Day17 {
     private static final long TRILLION = 1_000_000_000_000L;
 
     public static void main(String[] args) {
-        part1();
-        part2();
+        System.out.println(part1());
+        System.out.println(part2());
     }
 
-    private static void part1() {
-        Data corridor = new Data("", 0, 0);
-        int ip = 0;
+    private static long part1() {
+        var corridor = new Data("", 0, 0);
+        var ip = 0;
         for (int iter = 0; iter < 2022; ++iter) {
-            Data rock = new Data(ORDER[(iter % ORDER.length)], 2, corridor.minY() - 4);
+            var rock = new Data(ORDER[(iter % ORDER.length)], 2, corridor.minY() - 4);
             ip = step(corridor, ip, rock);
         }
-        System.out.println(Math.abs(corridor.minY()));
-
+        return Math.abs(corridor.minY());
     }
 
-    private static void part2() {
-        var<Pointers, Long> rows = new HashMap<Pointers, Long>();
-        var<Pointers, Integer> heights = new HashMap<Pointers, Integer>();
+    private static long part2() {
+        var rows = new HashMap<Pointers, Long>();
+        var heights = new HashMap<Pointers, Integer>();
         var corridor = new Data("", 0, 0);
         var ip = 0;
         var calculatedHeight = Long.MIN_VALUE;
@@ -32,37 +31,29 @@ public class Day17 {
         for (var iter = 0L; iter < TRILLION; ++iter) {
             var rock = new Data(ORDER[(int) (iter % ORDER.length)], 2, corridor.minY() - 4);
             ip = step(corridor, ip, rock);
-
             if (!jumped && corridor.topRow().equals("#######")) {
-                Pointers p = new Pointers((int) (iter % ORDER.length), ip % INPUT.length());
-                if (!jumped && rows.containsKey(p)) {
-                    var heightRepeat = -corridor.minY() - heights.get(p);
-                    var repeatLength = iter - rows.get(p);
+                var pointers = new Pointers((int) (iter % ORDER.length), ip % INPUT.length());
+                if (!jumped && rows.containsKey(pointers)) {
+                    var heightRepeat = -corridor.minY() - heights.get(pointers);
+                    var repeatLength = iter - rows.get(pointers);
                     var skippSize = (TRILLION - iter) / repeatLength;
                     calculatedHeight = skippSize * heightRepeat;
                     iter += skippSize * repeatLength;
                     jumped = true;
                 } else {
-                    rows.put(p, iter);
-                    heights.put(p, -corridor.minY());
+                    rows.put(pointers, iter);
+                    heights.put(pointers, -corridor.minY());
                 }
             }
         }
-        long answer = Math.abs(corridor.minY()) + calculatedHeight;
-        // System.out.println(answer < 1747557840340L);
-        // System.out.println(answer > 1411825190048L);
-        // System.out.println(answer != 1411825192794L);
-        System.out.println(answer);
-
+        return Math.abs(corridor.minY()) + calculatedHeight;
     }
 
-    private static int step(Data corridor, int ip, Data rock) {
-        boolean valid = true;
+    private static int step(Data corridor, int windPointer, Data rock) {
+        var ip = windPointer;
+        var valid = true;
         while (valid) {
             char push = INPUT.charAt(ip++ % INPUT.length());
-            // char push =
-            // EXAMPLE.charAt(ip++%EXAMPLE.length());//INPUT.charAt(ip++%INPUT.length());
-            // System.out.println("push: "+push);
             int xTrans = 0;
             if (push == '>') {
                 xTrans = 1;
@@ -80,8 +71,6 @@ public class Day17 {
                 rock.yTrans -= 1;
                 valid = false;
                 corridor.merge(rock.transformD());
-                // corridor.print();
-                // System.out.println("-----------------------------");
             }
         }
         return ip;
@@ -100,9 +89,9 @@ public class Day17 {
 
         public Data(String desc, int x, int y) {
             var lines = desc.lines().toList();
-            for (int i = 0; i < lines.size(); ++i) {
+            for (var i = 0; i < lines.size(); ++i) {
                 String line = lines.get(i);
-                for (int j = 0; j < line.length(); ++j) {
+                for (var j = 0; j < line.length(); ++j) {
                     if (line.charAt(j) == '#') {
                         matrix.put(new Coord(x + j, y + i - lines.size() + 1), '#');
                     }
@@ -135,7 +124,7 @@ public class Day17 {
         }
 
         Map<Coord, Character> transform() {
-            Map<Coord, Character> result = new HashMap<>();
+            var result = new HashMap<Coord, Character>();
             for (var e : matrix.entrySet()) {
                 result.put(new Coord(e.getKey().x() + xTrans, e.getKey().y() + yTrans), e.getValue());
             }
@@ -166,25 +155,11 @@ public class Day17 {
             return true;
         }
 
-        void print() {
-            System.out.println(minY());
-            for (int y = minY(); y < 0; ++y) {
-                System.out.print('|');
-                for (int x = 0; x < 7; ++x) {
-                    Character c = matrix.get(new Coord(x, y));
-                    c = c == null ? ' ' : c;
-                    System.out.print(c);
-                }
-                System.out.println('|');
-            }
-        }
-
         String topRow() {
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
             for (int x = 0; x < 7; ++x) {
-                Character c = matrix.get(new Coord(x, minY));
-                c = c == null ? ' ' : c;
-                sb.append(c);
+                var c = matrix.get(new Coord(x, minY));
+                sb.append(c == null ? ' ' : c);
             }
             return sb.toString();
         }
