@@ -5,142 +5,73 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.Stack;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class Day16 {
+    private static final String START="AA";
     public static void main(String[] args) {
-        Map<String, Valve> valveMap = new HashMap<>();
-        INPUT.lines().map(Valve::parse).forEach(v -> {
-            valveMap.put(v.id, v);
-        });
-        // part1(valveMap);
-        part2_2(valveMap);
+        var valveMap = INPUT.lines().map(Valve::parse).collect(Collectors.toMap(Valve::id, v->v));
+        System.out.println(part1(valveMap));
+        System.out.println(part2(valveMap));
     }
 
-    private static void part1(Map<String, Valve> valveMap) {
-        Queue<Step> steps = new ArrayDeque<>();
-        steps.add(new Step("AA", 0, 0, 0, new HashSet<String>(), Set.of("AA")));
-        int maxReleased = Integer.MIN_VALUE;
-        Step last = null;
-        while (!steps.isEmpty()) {
-            Step current = steps.poll();
-            if (current.minute() < 30) {
-                if (!current.open().contains(current.at()) && valveMap.get(current.at).flowRate() > 0) {
-                    steps.add(new Step(current.at(), current.minute() + 1,
-                            current.releases() + valveMap.get(current.at).flowRate(),
-                            current.released() + current.releases(), current.open(current.at()), current.visited()));
-                }
-                var availables = valveMap.get(current.at()).available();
-                availables.stream().filter(s -> !current.visited.contains(s)).forEach(id -> {
-                    steps.add(new Step(id, current.minute() + 1, current.releases(),
-                            current.released() + current.releases(), current.open(), current.visit(id)));
-                });
-            }
-            if (maxReleased < current.released()) {
-                maxReleased = current.released();
-                last = current;
-            }
-            System.out.println("step.size: " + steps.size() + "\t" + current.minute());
-        }
-        System.out.println(maxReleased);
+    private static int part1(Map<String, Valve> valveMap) {
+        var best = bestPath(30, valveMap, Set.of());
+        return releaseToTheLimit(30, best);
     }
-
-//    private static void part2(Map<String, Valve> valveMap) {
-//        Stack<ElephantStep> steps = new Stack<>();// new ArrayDeque<>();
-//        steps.add(new ElephantStep("AA", "AA", 0, 0, 0, new HashSet<String>(), Set.of("AA"), Set.of("AA")));
-//        int maxReleased = Integer.MIN_VALUE;
-//        ElephantStep last = null;
-//        long c = 0L;
-//        while (!steps.isEmpty()) {
-//            ++c;
-//            var current = steps.pop();
-//            if (current.minute() < 26) {
-//                var iShouldOpen = !current.open().contains(current.at()) && valveMap.get(current.at).flowRate() > 0;
-//                var eShouldOpen = !current.open().contains(current.eAt()) && valveMap.get(current.eAt).flowRate() > 0;
-//                if (iShouldOpen && eShouldOpen && !current.at().equals(current.eAt())) {
-//                    steps.add(new ElephantStep(current.at(), current.eAt(), current.minute() + 1,
-//                            current.releases() + valveMap.get(current.at()).flowRate()
-//                                    + valveMap.get(current.eAt()).flowRate(),
-//                            current.released() + current.releases(), current.open(current.at(), current.eAt()),
-//                            current.visited(), current.eVisited()));
-//                } else if (iShouldOpen) {
-//                    valveMap.get(current.eAt()).available().stream()
-//                            /* .filter(s->!current.eVisited().contains(s)) */.forEach(id -> {
-//                                steps.add(new ElephantStep(current.at(), id, current.minute() + 1,
-//                                        current.releases() + valveMap.get(current.at()).flowRate(),
-//                                        current.released() + current.releases(), current.open(current.at(), null),
-//                                        current.visited(), current.eVisit(id)));
-//                            });
-//                } else if (eShouldOpen) {
-//                    valveMap.get(current.at()).available().stream()
-//                            /* .filter(s->!current.visited().contains(s)) */.forEach(id -> {
-//                                steps.add(new ElephantStep(id, current.eAt(), current.minute() + 1,
-//                                        current.releases() + valveMap.get(current.eAt()).flowRate(),
-//                                        current.released() + current.releases(), current.open(null, current.eAt()),
-//                                        current.visit(id), current.eVisited()));
-//                            });
-//                } else {
-//                    valveMap.get(current.at()).available().stream()
-//                            /* .filter(s->!current.visited().contains(s)) */.forEach(id -> {
-//                                valveMap.get(current.eAt()).available().stream()
-//                                        /* .filter(s->!current.eVisited().contains(s)) */.forEach(eId -> {
-//                                            steps.add(new ElephantStep(id, eId, current.minute() + 1,
-//                                                    current.releases(), current.released() + current.releases(),
-//                                                    current.open(), current.visit(id), current.eVisit(eId)));
-//                                        });
-//                            });
-//                }
-//            }
-//            if (maxReleased < current.released()) {
-//                maxReleased = current.released();
-//                last = current;
-//            }
-//            if (c % 1_000_000 == 0) {
-//                System.out.println("step.size: " + steps.size() + "\t" + current.minute() + "\t" + c);
-//            }
-//        }
-//        System.out.println(maxReleased);
-//    }
-
-    private static void part2_2(Map<String, Valve> valveMap) {
+    
+    private static int part2(Map<String, Valve> valveMap) {
+        var me = bestPath(26, valveMap, new HashSet<>());
+        var elephant = bestPath(26, valveMap, me.opened());
+        return releaseToTheLimit(26, me)+releaseToTheLimit(26, elephant);
+    }
+    
+    private static State bestPath(int limit, Map<String, Valve> valveMap, Set<String> forbidden) {
         var prices = calcPrices(valveMap);
-        var valuables = valveMap.values().stream().filter(it -> it.flowRate() > 0).map(Valve::id).toList();
-        Stack<ElephantStep> steps = new Stack<>();// new ArrayDeque<>();
-        steps.add(new ElephantStep(List.of("AA"), List.of("AA"), new HashSet<String>()));
+        var valuables = valveMap.values().stream().filter(v->v.flowRate()>0).map(v->v.id).toList();
+        var steps = new ArrayDeque<State>();
+        steps.add(new State(START, 0, 0, 0, Set.of()));
         int maxReleased = Integer.MIN_VALUE;
-        ElephantStep last = null;
-        long c = 0L;
+        State bestPath = null;
         while (!steps.isEmpty()) {
-            ++c;
-            var current = steps.pop();
-            if (current.minutes(prices) < 26 || current.eMinutes(prices) < 26) {
-                String start = current.route().get(0);
-                String eStart = current.eRoute().get(0);
-                valuables.stream().filter(s -> !s.equals(start) && !s.equals(eStart) && !current.open().contains(s)).forEach(v -> {
-                    valuables.stream().filter(eS -> !eS.equals(start) && !eS.equals(eStart) && !current.open().contains(eS) && !eS.equals(v))
-                            .forEach(eV -> {
-                                steps.add(new ElephantStep(current.visit(v), current.eVisit(eV), current.open(v, eV)));
-                            });
-                });
-            }
-            if(maxReleased < current.released(prices, valveMap)) {
-                maxReleased = current.released(prices, valveMap);
-                last = current;
-                System.out.println(maxReleased);
-                System.out.println(last);
-            }
-            if (c % 1_000_000 == 0) {
-                System.out.println("step.size: " + steps.size() + "\t" + current.minutes(prices) + "\t" + current.eMinutes(prices)+"\t"+ c);
+            State current = steps.poll();
+            valuables.stream().filter(v->!current.at().equals(v)&&!forbidden.contains(v)).forEach(v->{
+                int price = prices.get(new IdPair(current.at(), v));
+                if(!current.opened().contains(v)&&current.minute()+price<limit) {
+                    steps.add(new State(v, current.minute()+price+1, current.releases()+valveMap.get(v).flowRate(), current.released()+(price+1)*current.releases(), current.open(v)));
+                }
+            });
+            
+            if(current.minute()<=limit) {
+                int r = releaseToTheLimit(limit, current);
+                if(maxReleased<r) {
+                    maxReleased = r;
+                    bestPath = current;
+                }
             }
         }
-        System.out.println(maxReleased);
+        return bestPath;
+    }
+    
+    private static int releaseToTheLimit(int limit, State state) {
+        if(state.minute()<limit) {
+            return state.released() + (limit-state.minute())*state.releases();
+        }
+        return state.released();
+    }
+    
+    private static final record State(String at, int minute, int releases, int released, Set<String> opened) {
+        Set<String> open(String id) {
+            var c = new HashSet<>(opened());
+            c.add(id);
+            return c;
+        }
     }
 
     private static final record Valve(String id, int flowRate, List<String> available) {
@@ -159,108 +90,13 @@ public class Day16 {
         }
     }
 
-    private static final record Step(String at, int minute, int releases, int released, Set<String> open,
-            Set<String> visited) {
-        Set<String> open(String v) {
-            var copy = new HashSet<>(open);
-            copy.add(v);
-            return copy;
-        }
-
-        Set<String> visit(String v) {
-            var copy = new HashSet<>(visited);
-            copy.add(v);
-            return copy;
-        }
-
-        int calcMaxRelease() {
-            return released + (30 - minute) * releases;
-        }
-    }
-
-    private static final record ElephantStep(List<String> route, List<String> eRoute, Set<String> open) {
-        Set<String> open(String v, String eV) {
-            var copy = new HashSet<>(open);
-            if (v != null) {
-                copy.add(v);
-            }
-            if (eV != null) {
-                copy.add(eV);
-            }
-            return copy;
-        }
-
-        List<String> visit(String v) {
-            var copy = new LinkedList<>(route);
-            copy.addFirst(v);
-            return copy;
-        }
-
-        List<String> eVisit(String v) {
-            var copy = new LinkedList<>(eRoute);
-            copy.addFirst(v);
-            return copy;
-        }
-
-        int minutes(Map<IdPair, Integer> prices) {
-            return minutes(route, prices);
-        }
-
-        int eMinutes(Map<IdPair, Integer> prices) {
-            return minutes(eRoute, prices);
-        }
-
-        private int minutes(List<String> r, Map<IdPair, Integer> prices) {
-            if (r.size() < 2) {
-                return 0;
-            }
-            int sum = 0;
-            String prev = r.get(r.size()-1);
-            for (int i = r.size()-2; i >= 0; --i) {
-                ++sum;
-                String next = r.get(i);
-                sum += prices.get(new IdPair(prev, next));
-                prev = next;
-            }
-            return sum;
-        }
-        
-        int released(Map<IdPair, Integer> prices, Map<String, Valve> valves) {
-            return released(route, prices, valves) + released(eRoute, prices, valves);
-        }
-        
-        private int released(List<String> r, Map<IdPair, Integer> prices, Map<String, Valve> valves) {
-            int res = 0;
-            int rate = 0;
-            int left = 26;
-            //while(left>0) {
-                String prev = r.get(r.size()-1);
-                for (int i = r.size()-2; i >= 0 && left > 0; --i) {
-                    String next = r.get(i);
-                    var price = prices.get(new IdPair(prev, next));
-                    if(left-price>1) {
-                        left -= price;
-                        res += (price+1) * rate;
-                        --left;
-                        rate += valves.get(next).flowRate();
-                    } else {
-                        res += left * rate;
-                        left = 0;
-                    }
-                    prev = next;
-                }
-            //}
-            return res;
-        }
-    }
-
     private static Map<IdPair, Integer> calcPrices(Map<String, Valve> valveMap) {
         var valuables = new ArrayList<>(valveMap.values().stream().filter(v -> v.flowRate() > 0).toList());
-        valuables.add(valveMap.get("AA"));
+        valuables.add(valveMap.get(START));
         var result = new HashMap<IdPair, Integer>();
         valuables.forEach(from -> {
             valuables.forEach(to -> {
-                if (from != to && !to.id.equals("AA")) {
+                if (from != to && !to.id().equals(START)) {
                     int price = calcPrice(from.id(), to.id(), valveMap);
                     result.put(new IdPair(from.id(), to.id()), price);
                 }
@@ -275,15 +111,15 @@ public class Day16 {
         visited.add(from);
         go.add(List.of(from));
         while (!go.isEmpty()) {
-            var n = go.poll();
-            if (n.get(0).equals(to)) {
-                return n.size() - 1;
+            var next = go.poll();
+            if (next.get(0).equals(to)) {
+                return next.size() - 1;
             }
-            valveMap.get(n.get(0)).available().stream().filter(s -> !visited.contains(s)).forEach(nn -> {
-                var nnn = new LinkedList<>(n);
-                nnn.addFirst(nn);
-                go.add(nnn);
-                visited.add(nn);
+            valveMap.get(next.get(0)).available().stream().filter(s -> !visited.contains(s)).forEach(n -> {
+                var path = new LinkedList<>(next);
+                path.addFirst(n);
+                go.add(path);
+                visited.add(n);
             });
         }
         throw new IllegalArgumentException();
