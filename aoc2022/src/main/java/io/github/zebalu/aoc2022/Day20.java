@@ -22,12 +22,12 @@ public class Day20 {
 
     private static List<Data> mix(List<Data> data, int repeat) {
         var moved = new ArrayList<>(data);
-        for (int i = 0; i < repeat; ++i) {
-            for (Data d : data) {
-                int idx = moved.indexOf(d);
+        for (var i = 0; i < repeat; ++i) {
+            for (var d : data) {
+                var idx = moved.indexOf(d);
                 moved.remove(idx);
-                long dif = d.value() % moved.size();
-                int nIdx = (int) ((dif + idx + 10 * moved.size()) % moved.size());
+                var dif = d.value() % moved.size();
+                var nIdx = (int) ((dif + idx + 10 * moved.size()) % moved.size());
                 moved.add(nIdx, d);
             }
         }
@@ -35,14 +35,14 @@ public class Day20 {
     }
 
     private static final long getResult(List<Data> moved) {
-        int zeroIdx = Integer.MIN_VALUE;
-        for (int i = 0; i < moved.size() && zeroIdx < 0; ++i) {
+        var zeroIdx = Integer.MIN_VALUE;
+        for (var i = 0; i < moved.size() && zeroIdx < 0; ++i) {
             if (moved.get(i).value() == 0) {
                 zeroIdx = i;
             }
         }
-        return moved.get((zeroIdx + 1000) % moved.size()).value() + moved.get((zeroIdx + 2000) % moved.size()).value()
-                + moved.get((zeroIdx + 3000) % moved.size()).value();
+        return moved.get((zeroIdx + 1_000) % moved.size()).value() + moved.get((zeroIdx + 2_000) % moved.size()).value()
+                + moved.get((zeroIdx + 3_000) % moved.size()).value();
     }
 
     private static final class Data {
