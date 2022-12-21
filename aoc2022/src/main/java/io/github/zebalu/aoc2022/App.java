@@ -50,6 +50,7 @@ public class App {
         days.add(new DayData(18, "Boiling Boulders", Day18::main));
         days.add(new DayData(19, "Not Enough Minerals", Day19::main));
         days.add(new DayData(20, "Grove Positioning System", Day20::main));
+        days.add(new DayData(21, "Monkey Math", Day21::main));
         Instant beforAll = Instant.now();
         for (var day : days) {
             System.out.println(day.header());

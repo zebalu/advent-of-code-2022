@@ -1,13 +1,11 @@
 package io.github.zebalu.aoc2022;
 
 import java.util.ArrayDeque;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.Set;
-import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
@@ -23,23 +21,27 @@ public class Day19 {
     }
 
     private static int part1(List<Blueprint> blueprints) {
+        return blueprints.parallelStream().mapToInt(bp -> bp.id * maximumGeode(bp, 24)).sum();
+        /*
         int sum = 0;
         for (int i = 0; i < blueprints.size(); ++i) {
             var bp = blueprints.get(i);
             int max = maximumGeode(bp, 24);
             sum += bp.id * max;
         }
-        return sum;
+        return sum;*/
     }
 
     private static long part2(List<Blueprint> blueprints) {
-        long sum = 1;
+        //long sum = 1;
+        return blueprints.parallelStream().limit(3).mapToLong(bp->maximumGeode(bp, 32)).reduce(1L, (a,b)->a*b);
+        /*
         for (int i = 0; i < 3; ++i) {
             var bp = blueprints.get(i);
             int max = maximumGeode(bp, 32);
             sum *= max;
         }
-        return sum;
+        return sum;*/
     }
 
     private static int maximumGeode(Blueprint blueprint, int maxStep) {
@@ -48,76 +50,58 @@ public class Day19 {
         int maxOre = IntStream
                 .of(blueprint.oreCost, blueprint.clayCost, blueprint.geodOreCost, blueprint.obisidanOreCost).max()
                 .orElseThrow();
-        int minOre = IntStream
-                .of(blueprint.oreCost, blueprint.clayCost, blueprint.geodOreCost, blueprint.obisidanOreCost).min()
-                .orElseThrow();
         Set<State> visited = new HashSet<>();
         int maxGeod = Integer.MIN_VALUE;
+       // State last = null;
         while (!states.isEmpty()) {
             var top = states.poll();
-            if (top.minute <= maxStep) {
+            if (top.minute <= maxStep && maxGeod<(maxStep-top.minute)*(top.geodRobot+1)+top.geodStore) {
                 if (top.geodStore > maxGeod) {
                     maxGeod = top.geodStore;
+                   // last = top;
+                    //System.out.println(visited.size()+"\t"+states.size());
                 }
+                List<State> next = new ArrayList<>();
                 if (canBuildGeodRobot(blueprint, top)) {
-                    var s = new State(top.minute + 1, top.oreStore + top.oreRobot - blueprint.geodOreCost, top.oreRobot,
+                    next.add(new State(top.minute + 1, top.oreStore + top.oreRobot - blueprint.geodOreCost, top.oreRobot,
                             top.clayStore + top.clayRobot, top.clayRobot,
                             top.obisidianStore + top.obsidianRobot - blueprint.geodeObisidanCost, top.obsidianRobot,
-                            top.geodStore + top.geodRobot, top.geodRobot + 1);
-                    if (!visited.contains(s)) {
-                        states.add(s);
-                        visited.add(s);
-                    }
+                            top.geodStore + top.geodRobot, top.geodRobot + 1));
+                    
                 } else {
-                    if (canBuildObsidianRobot(blueprint, top) && top.obsidianRobot < blueprint.geodeObisidanCost) { // &&
-                                                                                                                    // wothBuildingObsidinaRobot(blueprint,
-                                                                                                                    // top))
-                                                                                                                    // {
-                        var s = new State(top.minute + 1, top.oreStore + top.oreRobot - blueprint.obisidanOreCost,
+                    if (canBuildObsidianRobot(blueprint, top) && top.obsidianRobot < blueprint.geodeObisidanCost) {
+                        next.add(buildNext(blueprint, maxOre, top.minute + 1, top.oreStore + top.oreRobot - blueprint.obisidanOreCost,
                                 top.oreRobot, top.clayStore + top.clayRobot - blueprint.obisidanClayCost, top.clayRobot,
                                 top.obisidianStore + top.obsidianRobot, top.obsidianRobot + 1,
-                                top.geodStore + top.geodRobot, top.geodRobot);
-                        if (!visited.contains(s)) {
-                            states.add(s);
-                            visited.add(s);
-                        }
+                                top.geodStore + top.geodRobot, top.geodRobot));
                     } // else
-                    if (canBuildClayRobot(blueprint, top) && top.clayRobot < blueprint.obisidanClayCost) {// &&
-                                                                                                          // wothBuildingClayRobot(blueprint,
-                                                                                                          // top)) {
-                        var s = new State(top.minute + 1, top.oreStore + top.oreRobot - blueprint.clayCost,
+                    if (canBuildClayRobot(blueprint, top) && top.clayRobot < blueprint.obisidanClayCost) {
+                        next.add(buildNext(blueprint, maxOre, top.minute + 1, top.oreStore + top.oreRobot - blueprint.clayCost,
                                 top.oreRobot, top.clayStore + top.clayRobot, top.clayRobot + 1,
                                 top.obisidianStore + top.obsidianRobot, top.obsidianRobot,
-                                top.geodStore + top.geodRobot, top.geodRobot);
-                        if (!visited.contains(s)) {
-                            states.add(s);
-                            visited.add(s);
-                        }
+                                top.geodStore + top.geodRobot, top.geodRobot));
                     }
                     if (canBuildOreRobot(blueprint, top) && top.oreRobot < maxOre) {
-                        var s = new State(top.minute + 1, top.oreStore + top.oreRobot - blueprint.oreCost,
+                        next.add(buildNext(blueprint, maxOre, top.minute + 1, top.oreStore + top.oreRobot - blueprint.oreCost,
                                 top.oreRobot + 1, top.clayStore + top.clayRobot, top.clayRobot,
                                 top.obisidianStore + top.obsidianRobot, top.obsidianRobot,
-                                top.geodStore + top.geodRobot, top.geodRobot);
-                        if (!visited.contains(s)) {
-                            states.add(s);
-                            visited.add(s);
-                        }
+                                top.geodStore + top.geodRobot, top.geodRobot));
                     }
-                    var s = new State(top.minute + 1, Math.min(top.oreStore + top.oreRobot, maxOre + minOre),
-                            top.oreRobot, Math.min(top.clayStore + top.clayRobot, blueprint.obisidanClayCost),
-                            top.clayRobot,
-                            Math.min(top.obisidianStore + top.obsidianRobot, blueprint.geodeObisidanCost),
-                            top.obsidianRobot, top.geodStore + top.geodRobot, top.geodRobot);
+                    next.add(buildNext(blueprint, maxOre, top.minute + 1, top.oreStore + top.oreRobot, top.oreRobot,
+                            top.clayStore + top.clayRobot, top.clayRobot, top.obisidianStore + top.obsidianRobot,
+                            top.obsidianRobot, top.geodStore + top.geodRobot, top.geodRobot));
+                }
 
+                next.forEach(s -> {
                     if (!visited.contains(s)) {
                         states.add(s);
                         visited.add(s);
                     }
-                }
-
+                });
             }
         }
+//        System.out.println(visited.size());
+//        System.out.println(blueprint.id+"\t"+last);
         return maxGeod;
     }
 
@@ -136,29 +120,12 @@ public class Day19 {
     private static final boolean canBuildGeodRobot(Blueprint bp, State state) {
         return state.oreStore >= bp.geodOreCost && state.obisidianStore >= bp.geodeObisidanCost;
     }
-
-    private static final boolean wothBuildingObsidinaRobot(Blueprint bp, State state) {
-        int left = 24 - state.minute;
-        State future = new State(state.minute + left, state.oreStore + left * state.oreRobot - bp.obisidanOreCost,
-                state.oreRobot, state.clayStore + left * state.clayRobot - bp.obisidanClayCost, state.clayRobot,
-                state.obisidianStore + left * (state.obsidianRobot + 1), state.obsidianRobot + 1, state.geodStore,
-                state.geodRobot);
-        return canBuildGeodRobot(bp, future);
-    }
-
-    private static final boolean wothBuildingClayRobot(Blueprint bp, State state) {
-        int left = 24 - state.minute;
-        State future = state;
-        for (int i = 0; i < left; ++i) {
-            future = new State(future.minute + 1, future.oreStore + future.oreRobot, future.oreRobot,
-                    future.clayStore + future.clayRobot, future.clayRobot + 1,
-                    future.obisidianStore + future.obsidianRobot, future.obsidianRobot,
-                    future.geodStore + future.geodRobot, future.geodRobot);
-            if (canBuildObsidianRobot(bp, future) && wothBuildingObsidinaRobot(bp, future)) {
-                return true;
-            }
-        }
-        return false;
+    
+    private static final State buildNext(Blueprint blueprint, int maxOre, int minute, int oreStore, int oreRobot,
+            int clayStore, int clayRobot, int obisidianStore, int obsidianRobot, int geodStore, int geodRobot) {
+        return new State(minute, Math.min(oreStore, 2 * maxOre), oreRobot,
+                Math.min(clayStore, blueprint.obisidanClayCost*2), clayRobot,
+                Math.min(obisidianStore, blueprint.geodeObisidanCost*2), obsidianRobot, geodStore, geodRobot);
     }
 
     private static final record State(byte minute, byte oreStore, byte oreRobot, byte clayStore, byte clayRobot,
