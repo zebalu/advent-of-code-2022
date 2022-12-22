@@ -141,15 +141,15 @@ public class Day22 {
         }
     }
 
-    private static Orientation findNextByTeleport(MonkeyMap monkeyMap, Orientation orient) {
-        if (orient.facing.isFacingRight()) {
-            return new Orientation(new Coord(monkeyMap.minXonY.get(orient.at.y), orient.at.y), orient.facing);
-        } else if (orient.facing.isFacingLeft()) {
-            return new Orientation(new Coord(monkeyMap.maxXonY.get(orient.at.y), orient.at.y), orient.facing);
-        } else if (orient.facing.isFacingDown()) {
-            return new Orientation(walkUpToTheEdge(monkeyMap, orient.at), orient.facing);
+    private static Orientation findNextByTeleport(MonkeyMap monkeyMap, Orientation pos) {
+        if (pos.facing.isFacingRight()) {
+            return new Orientation(new Coord(monkeyMap.minXonY.get(pos.at.y), pos.at.y), pos.facing);
+        } else if (pos.facing.isFacingLeft()) {
+            return new Orientation(new Coord(monkeyMap.maxXonY.get(pos.at.y), pos.at.y), pos.facing);
+        } else if (pos.facing.isFacingDown()) {
+            return new Orientation(walkUpToTheEdge(monkeyMap, pos.at), pos.facing);
         } else {
-            return new Orientation(walkDownToTehEdge(monkeyMap, orient.at), orient.facing);
+            return new Orientation(walkDownToTehEdge(monkeyMap, pos.at), pos.facing);
         }
     }
 
