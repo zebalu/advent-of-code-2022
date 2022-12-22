@@ -156,17 +156,17 @@ public class Day22 {
     private static Coord walkDownToTehEdge(MonkeyMap monkeyMap, Coord at) {
         Coord down = new Coord(at.x, at.y);
         while (monkeyMap.monkeyMap.containsKey(down)) {
-            down = down.plus(new Coord(0, 1));
+            down = down.plus(Coord.DOWN);
         }
-        return new Coord(at.x, down.y - 1);
+        return down.plus(Coord.UP);
     }
 
     private static Coord walkUpToTheEdge(MonkeyMap monkeyMap, Coord at) {
         Coord up = new Coord(at.x, at.y);
         while (monkeyMap.monkeyMap.containsKey(up)) {
-            up = up.plus(new Coord(0, -1));
+            up = up.plus(Coord.UP);
         }
-        return new Coord(at.x, up.y + 1);
+        return up.plus(Coord.DOWN);
     }
 
     private static final class MonkeyMap {
