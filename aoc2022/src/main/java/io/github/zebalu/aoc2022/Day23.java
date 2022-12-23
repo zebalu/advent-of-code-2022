@@ -99,14 +99,18 @@ public class Day23 {
     private static final record Coord(int x, int y) implements Comparable<Coord> {
         private static final Comparator<Coord> COMPARATOR = Comparator.comparingInt(Coord::x).thenComparingInt(Coord::y);
         List<List<Coord>> neighbourGroups() {
-            return List.of(List.of(new Coord(x, y - 1), new Coord(x + 1, y - 1), new Coord(x - 1, y - 1)),
+            return List.of(
+                    List.of(new Coord(x, y - 1), new Coord(x + 1, y - 1), new Coord(x - 1, y - 1)),
                     List.of(new Coord(x, y + 1), new Coord(x + 1, y + 1), new Coord(x - 1, y + 1)),
                     List.of(new Coord(x - 1, y), new Coord(x - 1, y - 1), new Coord(x - 1, y + 1)),
                     List.of(new Coord(x + 1, y), new Coord(x + 1, y - 1), new Coord(x + 1, y + 1)));
         }
 
         Set<Coord> allNeighbors() {
-            return Set.of(new Coord(x-1, y-1), new Coord(x, y-1), new Coord(x+1, y-1), new Coord(x-1, y), new Coord(x+1, y), new Coord(x-1, y+1), new Coord(x, y+1), new Coord(x+1, y+1));
+            return Set.of(
+                    new Coord(x-1, y-1), new Coord(x, y-1), new Coord(x+1, y-1), 
+                    new Coord(x-1, y), new Coord(x+1, y), 
+                    new Coord(x-1, y+1), new Coord(x, y+1), new Coord(x+1, y+1));
         }
         @Override
         public int hashCode() {
