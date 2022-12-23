@@ -1,10 +1,13 @@
 package io.github.zebalu.aoc2022;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class Day23 {
@@ -16,7 +19,7 @@ public class Day23 {
     }
 
     private static final int part1() {
-        Map<Coord, Character> map = readElfMap(INPUT);
+        var map = readElfMap(INPUT);
         expand(map, 10);
         return countEmptyArea(map);
     }
@@ -25,37 +28,37 @@ public class Day23 {
         return expand(readElfMap(INPUT), Integer.MAX_VALUE);
     }
 
-    private static Map<Coord, Character> readElfMap(String desc) {
-        var map = new HashMap<Coord, Character>();
+    private static Set<Coord> readElfMap(String desc) {
+        var map = new HashSet<Coord>();
         var lines = desc.lines().toList();
         for (int y = 0; y < lines.size(); ++y) {
             var line = lines.get(y);
             for (int x = 0; x < line.length(); ++x) {
-                char c = line.charAt(x);
+                var c = line.charAt(x);
                 if (c == ELF.charValue()) {
-                    map.put(new Coord(x, y), ELF);
+                    map.add(new Coord(x, y));
                 }
             }
         }
         return map;
     }
 
-    private static final int expand(Map<Coord, Character> map, int maxRounds) {
+    private static final int expand(Set<Coord> map, int maxRounds) {
         boolean changed = false;
         int round = 0;
         do {
-            Map<Coord, List<Coord>> proposals = new HashMap<>();
+            Map<Coord, List<Coord>> proposals = new ConcurrentHashMap<>();
             final int fRound = round;
-            map.keySet().forEach(elf -> {
-                int occupiedNeighbours = elf.allNeighbors().stream().mapToInt(n -> map.containsKey(n) ? 1 : 0).sum();
-                if (occupiedNeighbours != 0) {
+            map.parallelStream().forEach(elf -> {
+                var hasOccupiedNeighbours = elf.allNeighbors().stream().anyMatch(n -> map.contains(n));
+                if (hasOccupiedNeighbours) {
                     boolean proposed = false;
                     var groups = elf.neighbourGroups();
                     for (int i = 0; i < groups.size() && !proposed; ++i) {
                         var ng = groups.get((i + fRound) % groups.size());
-                        int occupiedInGroup = ng.stream().mapToInt(n -> map.containsKey(n) ? 1 : 0).sum();
-                        if (occupiedInGroup == 0) {
-                            proposals.computeIfAbsent(ng.get(0), k -> new ArrayList<>()).add(elf);
+                        var noneOccupiedInGroup = ng.stream().noneMatch(n -> map.contains(n));
+                        if (noneOccupiedInGroup) {
+                            proposals.computeIfAbsent(ng.get(0), k -> Collections.synchronizedList(new ArrayList<>())).add(elf);
                             proposed = true;
                         }
                     }
@@ -63,7 +66,7 @@ public class Day23 {
             });
             proposals.entrySet().stream().filter(p->p.getValue().size()==1).forEach(p->{
                 map.remove(p.getValue().get(0));
-                map.put(p.getKey(), ELF);
+                map.add(p.getKey());
             });
             ++round;
             changed = proposals.size() > 0 && round < maxRounds;
@@ -71,12 +74,12 @@ public class Day23 {
         return round;
     }
 
-    private static final int countEmptyArea(Map<Coord, Character> map) {
+    private static final int countEmptyArea(Set<Coord> map) {
         int minX = Integer.MAX_VALUE;
         int maxX = Integer.MIN_VALUE;
         int minY = Integer.MAX_VALUE;
         int maxY = Integer.MIN_VALUE;
-        for (var elf : map.keySet()) {
+        for (var elf : map) {
             if (elf.x < minX) {
                 minX = elf.x;
             }
@@ -94,7 +97,8 @@ public class Day23 {
         return area - map.size();
     }
 
-    private static final record Coord(int x, int y) {
+    private static final record Coord(int x, int y) implements Comparable<Coord> {
+        private static final Comparator<Coord> COMPARATOR = Comparator.comparingInt(Coord::x).thenComparingInt(Coord::y);
         List<List<Coord>> neighbourGroups() {
             return List.of(List.of(new Coord(x, y - 1), new Coord(x + 1, y - 1), new Coord(x - 1, y - 1)),
                     List.of(new Coord(x, y + 1), new Coord(x + 1, y + 1), new Coord(x - 1, y + 1)),
@@ -104,6 +108,14 @@ public class Day23 {
 
         Set<Coord> allNeighbors() {
             return neighbourGroups().stream().flatMap(l -> l.stream()).distinct().collect(Collectors.toSet());
+        }
+        @Override
+        public int hashCode() {
+            return (x << 8) | y;
+        }
+        @Override
+        public int compareTo(Coord o) {
+            return COMPARATOR.compare(this, o);
         }
     }
 
