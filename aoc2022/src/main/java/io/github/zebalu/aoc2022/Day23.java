@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 public class Day23 {
     private static final Character ELF = Character.valueOf('#');
@@ -55,10 +54,10 @@ public class Day23 {
                     boolean proposed = false;
                     var groups = elf.neighbourGroups();
                     for (int i = 0; i < groups.size() && !proposed; ++i) {
-                        var ng = groups.get((i + fRound) % groups.size());
-                        var noneOccupiedInGroup = ng.stream().noneMatch(n -> map.contains(n));
+                        var neighbourGroup = groups.get((i + fRound) % groups.size());
+                        var noneOccupiedInGroup = neighbourGroup.stream().noneMatch(n -> map.contains(n));
                         if (noneOccupiedInGroup) {
-                            proposals.computeIfAbsent(ng.get(0), k -> Collections.synchronizedList(new ArrayList<>())).add(elf);
+                            proposals.computeIfAbsent(neighbourGroup.get(0), k -> Collections.synchronizedList(new ArrayList<>())).add(elf);
                             proposed = true;
                         }
                     }
@@ -107,7 +106,7 @@ public class Day23 {
         }
 
         Set<Coord> allNeighbors() {
-            return neighbourGroups().stream().flatMap(l -> l.stream()).distinct().collect(Collectors.toSet());
+            return Set.of(new Coord(x-1, y-1), new Coord(x, y-1), new Coord(x+1, y-1), new Coord(x-1, y), new Coord(x+1, y), new Coord(x-1, y+1), new Coord(x, y+1), new Coord(x+1, y+1));
         }
         @Override
         public int hashCode() {
