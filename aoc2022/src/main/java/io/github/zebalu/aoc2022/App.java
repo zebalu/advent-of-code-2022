@@ -54,6 +54,7 @@ public class App {
         days.add(new DayData(22, "Monkey Map", Day22::main));
         days.add(new DayData(23, "Unstable Diffusion", Day23::main));
         days.add(new DayData(24, "Blizzard Basin", Day24::main));
+        days.add(new DayData(25, "Full of Hot Air", Day25::main));
         Instant beforAll = Instant.now();
         for (var day : days) {
             System.out.println(day.header());
