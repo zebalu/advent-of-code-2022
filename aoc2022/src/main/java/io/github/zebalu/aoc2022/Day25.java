@@ -5,6 +5,7 @@ import java.util.Map;
 public class Day25 {
     public static void main(String[] args) {
         System.out.println(part1());
+        System.out.println("Merry Christmas!");
     }
     
     private static final String part1() {
