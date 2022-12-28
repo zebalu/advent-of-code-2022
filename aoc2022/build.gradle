@@ -32,8 +32,8 @@ testing {
 }
 
 application {
-    // Define the main class for the application.
-    mainClass = 'io.github.zebalu.aoc2022.App'
+    mainModule = 'io.github.zebalu.aoc2022'
+    mainClass = 'io.github.zebalu.aoc2022.main.AdventOfCode2022'
 }
 
 
@@ -41,5 +41,22 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(19)
         //vendor = JvmVendorSpec.GRAAL_VM
+    }
+}
+
+tasks.named('jar') {
+    manifest {
+        attributes('Main-Class': 'io.github.zebalu.aoc2022.main.AdventOfCode2022')
+    }
+}
+
+tasks.register('runDiagnostics', JavaExec) {
+    group = "Execution"
+    description = "Run the main class with FlightRecorder"
+    classpath = sourceSets.main.runtimeClasspath
+    jvmArgs=['-XX:+FlightRecorder', '-XX:StartFlightRecording=duration=120s,dumponexit=true,filename=diagnostics.jfr']
+    mainClass = application.mainClass
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(19)
     }
 }
