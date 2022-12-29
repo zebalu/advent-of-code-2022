@@ -115,6 +115,10 @@ public class Day14 {
             var xy = desc.split(",");
             return new Coord(Integer.parseInt(xy[0]), Integer.parseInt(xy[1]));
         }
+        @Override
+        public int hashCode() {
+            return (x << 16) | y;
+        }
     }
 
     private static List<Coord> mapToCoordList(String[] coordDescs) {
