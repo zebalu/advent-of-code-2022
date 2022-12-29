@@ -9,3 +9,4 @@ build
 /aoc2022/bin
 /aoc2022/.classpath
 /aoc2022/.project
+/aoc2022/diagnostics.jfr
